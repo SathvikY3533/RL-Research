@@ -1,0 +1,8 @@
+gym
+math
+random
+matplotlib
+matplotlib.pyplot
+collections
+itertools
+torch
