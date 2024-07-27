@@ -13,6 +13,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
+import time
 
 # Define ReplayMemory class
 class ReplayMemory(object):
@@ -87,8 +88,8 @@ def main():
     warnings.filterwarnings("ignore")
 
     parser = argparse.ArgumentParser(description="Model Training")
-    parser.add_argument('--modelPath', type=str, default="model.pth", help='Path to the saved model')
-    parser.add_argument('--savePath', type=str, default=".", help='Path to save the model')
+    parser.add_argument('--modelPath', type=str, default="/Users/sathvikyechuri/Desktop/Inspirit AI Research/model.pth", help='Path to the saved model')
+    parser.add_argument('--savePath', type=str, default="/Users/sathvikyechuri/Desktop/Inspirit AI Research", help='Path to save the model')
     parser.add_argument('--evaluation', dest='evaluation', action='store_true', help='Only do evaluation using pretrained model')
     args = parser.parse_args()
 
@@ -152,7 +153,7 @@ def main():
                 else:
                     display.display(plt.gcf())
 
-        for i_episode in range(600):
+        for i_episode in range(3):
             state, info = env.reset()
             state = torch.tensor(state, dtype=torch.float32, device=device).unsqueeze(0)
             for t in count():
@@ -186,7 +187,11 @@ def main():
         plt.ioff()
         plt.show()
 
-        torch.save(policy_net.state_dict(), 'model.pth')
+        # Save the model to the path specified by --savePath
+        model_save_path = args.savePath + '/model.pth'
+        torch.save(policy_net.state_dict(), model_save_path)
+        print(f"Model saved to {model_save_path}")
+
         env.close()
     else:
         def load_model(filepath, n_observations, n_actions):
@@ -196,21 +201,30 @@ def main():
             return model
 
         def test_model(model, num_episodes=10):
-            env = gym.make("CartPole-v1")
+            env = gym.make("CartPole-v1", render_mode='human')
+            
             for i_episode in range(num_episodes):
                 state, info = env.reset()
                 state = torch.tensor(state, dtype=torch.float32, device=device).unsqueeze(0)
-                for t in count():
+                
+                done = False
+                while not done:
                     with torch.no_grad():
                         action = model(state).max(1).indices.view(1, 1)
+                    
                     observation, reward, terminated, truncated, _ = env.step(action.item())
                     done = terminated or truncated
-                    env.render()
-                    if done:
-                        print(f"Episode {i_episode + 1} finished after {t + 1} timesteps")
-                        break
+                    
                     state = torch.tensor(observation, dtype=torch.float32, device=device).unsqueeze(0)
+                    
+                    # Optional: Add a small delay to make the rendering visible
+                    # This might be necessary if the environment is rendering too quickly.
+                    time.sleep(0.02)  # Adjust as needed (in seconds)
+                
+                print(f"Episode {i_episode + 1} finished after {done} timesteps")
+            
             env.close()
+
 
         state, info = gym.make("CartPole-v1").reset()
         n_observations = len(state)
