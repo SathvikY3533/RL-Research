@@ -153,7 +153,7 @@ def main():
                 else:
                     display.display(plt.gcf())
 
-        for i_episode in range(3):
+        for i_episode in range(500):
             state, info = env.reset()
             state = torch.tensor(state, dtype=torch.float32, device=device).unsqueeze(0)
             for t in count():
