@@ -6,13 +6,15 @@ import matplotlib.pyplot as plt
 from collections import namedtuple, deque
 from itertools import count
 
-import warnings, argparse
+import warnings
+import argparse
 
 import torch
 import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
 
+# Define ReplayMemory class
 class ReplayMemory(object):
     def __init__(self, capacity):
         self.memory = deque([], maxlen=capacity)
@@ -27,6 +29,7 @@ class ReplayMemory(object):
     def __len__(self):
         return len(self.memory)
 
+# Define DQN class
 class DQN(nn.Module):
     def __init__(self, n_observations, n_actions):
         super(DQN, self).__init__()
@@ -39,6 +42,7 @@ class DQN(nn.Module):
         x = F.relu(self.layer2(x))
         return self.layer3(x)
 
+# Define functions for action selection and model optimization
 def select_action(state, steps_done, policy_net, EPS_START, EPS_END, EPS_DECAY, device, env):
     sample = random.random()
     eps_threshold = EPS_END + (EPS_START - EPS_END) * \
@@ -116,6 +120,14 @@ def main():
         memory = ReplayMemory(10000)
         steps_done = 0
 
+        # Enable interactive mode for live plotting
+        plt.ion()
+
+        episode_durations = []
+        is_ipython = 'inline' in matplotlib.get_backend()
+        if is_ipython:
+            from IPython import display
+
         def plot_durations(show_result=False):
             plt.figure(1)
             durations_t = torch.tensor(episode_durations, dtype=torch.float)
@@ -139,13 +151,6 @@ def main():
                     display.clear_output(wait=True)
                 else:
                     display.display(plt.gcf())
-
-        episode_durations = []
-        is_ipython = 'inline' in matplotlib.get_backend()
-        if is_ipython:
-            from IPython import display
-
-        plt.ion()
 
         for i_episode in range(600):
             state, info = env.reset()
